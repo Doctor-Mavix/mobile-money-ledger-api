@@ -1,0 +1,13 @@
+{
+  "auth.verify.subject": "Confirm your email address",
+  "auth.verify.body": "Your confirmation code is {code}. It expires in 24 hours.",
+  "auth.reset.subject": "Reset your password",
+  "auth.reset.body": "Your reset code is {code}. It expires in 15 minutes. If you did not ask for this, ignore this message.",
+  "auth.security.passwordChanged.subject": "Your password was changed",
+  "auth.security.passwordChanged.body": "Your account password was just changed and your other sessions were signed out. If this was not you, reset your password immediately.",
+  "auth.security.sessionsRevoked.subject": "Your sessions were signed out",
+  "auth.security.sessionsRevoked.body": "Unusual activity was detected on your account and every session was signed out as a precaution. Sign in again and change your password.",
+  "email.greeting": "Hello",
+  "email.signature": "The {appName} team",
+  "email.footer": "This is an automated message, please do not reply."
+}

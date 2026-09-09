@@ -1,0 +1,13 @@
+{
+  "auth.verify.subject": "Confirmez votre adresse e-mail",
+  "auth.verify.body": "Votre code de confirmation est {code}. Il expire dans 24 heures.",
+  "auth.reset.subject": "Réinitialisation de votre mot de passe",
+  "auth.reset.body": "Votre code de réinitialisation est {code}. Il expire dans 15 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.",
+  "auth.security.passwordChanged.subject": "Votre mot de passe a été modifié",
+  "auth.security.passwordChanged.body": "Le mot de passe de votre compte vient d'être modifié et vos autres sessions ont été fermées. Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe immédiatement.",
+  "auth.security.sessionsRevoked.subject": "Vos sessions ont été fermées",
+  "auth.security.sessionsRevoked.body": "Une activité inhabituelle a été détectée sur votre compte et toutes vos sessions ont été fermées par précaution. Reconnectez-vous et changez votre mot de passe.",
+  "email.greeting": "Bonjour",
+  "email.signature": "L'équipe {appName}",
+  "email.footer": "Ce message est automatique, merci de ne pas y répondre."
+}

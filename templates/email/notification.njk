@@ -1,0 +1,11 @@
+{% extends "layout.njk" %}
+
+{% block content %}
+<h1 style="margin:0 0 12px;font-size:20px;font-weight:600;">{{ title }}</h1>
+<p style="margin:0;font-size:15px;line-height:1.6;">{{ body }}</p>
+{% if actionUrl %}
+<p style="margin:24px 0 0;">
+  <a href="{{ actionUrl }}" style="display:inline-block;padding:10px 18px;background:#ea580c;color:#ffffff;border-radius:6px;text-decoration:none;font-size:14px;">{{ actionLabel }}</a>
+</p>
+{% endif %}
+{% endblock %}

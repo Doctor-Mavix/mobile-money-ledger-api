@@ -1,0 +1,233 @@
+// SQL schema. This project is PostgreSQL only — see src/core/config/env.ts.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "nodejs"
+  moduleFormat = "esm"
+}
+
+// Prisma 7 forbids `url` here: the CLI reads it from prisma.config.ts and the runtime
+// gets it from the driver adapter passed to the PrismaClient constructor.
+datasource db {
+  provider = "postgresql"
+}
+
+enum ActorStatus {
+  pending
+  active
+  disabled
+}
+
+/// One table for every kind of actor. This project defines two: `user`, who holds an account,
+/// and `agent`, who runs the back office.
+model Actor {
+  id        String      @id
+  actorType String      @map("actor_type")
+  email     String
+  status    ActorStatus @default(pending)
+
+  displayName  String  @map("display_name")
+  passwordHash String  @map("password_hash")
+  phone        String?
+
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  phoneVerifiedAt DateTime? @map("phone_verified_at")
+
+  roles       String[] @default([])
+  permissions String[] @default([])
+
+  /// Base32 TOTP seed. Present as soon as setup starts, but only trusted once
+  /// `mfaEnabledAt` is set: an unconfirmed secret must not be able to lock an account.
+  mfaSecret       String?  @map("mfa_secret")
+  mfaEnabledAt    DateTime? @map("mfa_enabled_at")
+  /// Argon2 hashes, removed one by one as they are spent.
+  mfaBackupCodes  String[] @default([]) @map("mfa_backup_codes")
+
+  lastLoginAt DateTime? @map("last_login_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  oauthAccounts OAuthAccount[]
+
+  /// The same address may exist as a user and as an agent; it is the pair that is unique.
+  @@unique([actorType, email])
+  @@index([actorType, createdAt(sort: Desc), id(sort: Desc)])
+  @@map("actors")
+}
+
+/// Append-only. Never updated, never deleted by the application: a security log that the
+/// application can rewrite is not evidence of anything.
+model AuthAudit {
+  id        String   @id
+  actorId   String?  @map("actor_id")
+  actorType String   @map("actor_type")
+  event     String
+  ip        String?
+  userAgent String?  @map("user_agent")
+  requestId String?  @map("request_id")
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([actorId, createdAt(sort: Desc)])
+  @@index([event, createdAt(sort: Desc)])
+  @@map("auth_audit")
+}
+
+model OAuthAccount {
+  id                String   @id
+  actorId           String   @map("actor_id")
+  provider          String
+  providerAccountId String   @map("provider_account_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  actor Actor @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([actorId])
+  @@map("oauth_accounts")
+}
+
+model Notification {
+  id      String @id
+  actorId String @map("actor_id")
+  type    String
+  title   String
+  body    String
+  data    Json   @default("{}")
+
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // The inbox is always read for one actor, newest first, sometimes unread only.
+  @@index([actorId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([actorId, readAt])
+  @@map("notifications")
+}
+
+enum MediaStatus {
+  pending
+  ready
+  failed
+}
+
+model Media {
+  id         String      @id
+  ownerType  String      @map("owner_type")
+  ownerId    String      @map("owner_id")
+  filename   String
+  mimeType   String      @map("mime_type")
+  size       Int
+  storageKey String      @map("storage_key")
+  status     MediaStatus @default(pending)
+  variants   Json        @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([ownerType, ownerId, createdAt])
+  @@map("media")
+}
+
+enum WalletStatus {
+  active
+  frozen
+  closed
+}
+
+/// `system` wallets are the counterpart of money entering and leaving the platform. They are
+/// what keeps the ledger closed: every entry has an opposite entry, so the sum over all
+/// wallets is zero and a missing or duplicated movement shows up as a non-zero total.
+enum WalletKind {
+  user
+  system
+}
+
+model Wallet {
+  id      String @id
+  /// The literal `system` for house wallets. No relation to `actors` on purpose: the wallet
+  /// module owns this table and stays extractable, exactly as `notifications` does.
+  actorId String @map("actor_id")
+  kind    WalletKind   @default(user)
+
+  currency String
+  /// Minor units, never negative. Guarded twice: by `SELECT ... FOR UPDATE` in the transfer
+  /// path and by a CHECK constraint, because application logic is the thing that gets edited.
+  balance BigInt       @default(0)
+  status  WalletStatus @default(active)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ledgerEntries LedgerEntry[]
+
+  /// One wallet per actor and currency — including the system actor.
+  @@unique([actorId, currency])
+  @@map("wallets")
+}
+
+enum TransferStatus {
+  completed
+  failed
+}
+
+/// What the caller asked for. The ledger records what actually moved; a `failed` row moved
+/// nothing and exists only so replaying its idempotency key returns the same refusal.
+model Transfer {
+  id String @id
+  /// Scoped to the caller: one client's key can never collide with — or reveal — another's.
+  idempotencyKey String @map("idempotency_key")
+  actorId        String @map("actor_id")
+
+  sourceWalletId String @map("source_wallet_id")
+  targetWalletId String @map("target_wallet_id")
+  amount         BigInt
+  currency       String
+
+  status        TransferStatus
+  reference     String?
+  failureReason String? @map("failure_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  entries LedgerEntry[]
+
+  @@unique([actorId, idempotencyKey])
+  @@index([actorId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([sourceWalletId, createdAt(sort: Desc)])
+  @@index([targetWalletId, createdAt(sort: Desc)])
+  @@map("transfers")
+}
+
+/// Append-only: written inside the transaction that moves the money, then never updated and
+/// never deleted. A correction is a new pair of entries, not an edit — a ledger the
+/// application can rewrite proves nothing about what happened.
+model LedgerEntry {
+  id String @id
+  /// Groups the entries of one movement. Each group sums to zero.
+  transferId String @map("transfer_id")
+  walletId   String @map("wallet_id")
+
+  /// Signed minor units: negative debits the wallet, positive credits it. One column rather
+  /// than a direction plus a magnitude, so "does this balance?" is a SUM and not a CASE.
+  amount   BigInt
+  currency String
+  /// The balance this wallet held once this entry was applied. Lets a statement show a running
+  /// balance without re-adding the whole history, and lets a replay check every intermediate
+  /// step rather than only the total.
+  balanceAfter BigInt @map("balance_after")
+  /// Per wallet, gapless, starting at 1. Written under the same row lock as the balance, so a
+  /// gap or a repeat is proof that a movement escaped the lock.
+  sequence Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  transfer Transfer @relation(fields: [transferId], references: [id])
+  wallet   Wallet   @relation(fields: [walletId], references: [id])
+
+  @@unique([walletId, sequence])
+  @@index([walletId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([transferId])
+  @@map("ledger_entries")
+}

@@ -1,0 +1,25 @@
+node_modules
+dist
+coverage
+*.tsbuildinfo
+
+# Regenerated inside the image by `prisma generate`; a copy built on another platform would
+# silently win over the one the build produces.
+src/generated
+
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+Dockerfile
+.dockerignore
+docker-compose*.yml
+deploy
+
+logs
+*.log
+.DS_Store
+.idea
+.vscode
