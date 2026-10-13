@@ -522,11 +522,11 @@ fix belongs in the kit.
 
 ## The OrangCode TypeScript family
 
-- [orangcode-express-ts](https://github.com/GITHUB_USER/orangcode-express-ts) — the template: Express 5 + strict TypeScript, Postgres (Prisma) or MongoDB (Mongoose)
-- [orangcode-cli](https://github.com/GITHUB_USER/orangcode-cli) — the generator: blueprint → module, byte-identical regeneration
+- [orangcode-express-ts](https://github.com/Doctor-Mavix/orangcode-express-ts) — the template: Express 5 + strict TypeScript, Postgres (Prisma) or MongoDB (Mongoose)
+- [orangcode-cli](https://github.com/Doctor-Mavix/orangcode-cli) — the generator: blueprint → module, byte-identical regeneration
 - **mobile-money-ledger-api** (this repository) — validation project: wallets, transfers, double-entry ledger (Postgres)
-- [social-feed-api](https://github.com/GITHUB_USER/social-feed-api) — validation project: follow graph and home timeline (MongoDB)
-- [ecommerce-orders-api](https://github.com/GITHUB_USER/ecommerce-orders-api) — validation project: catalogue, cart, orders (Postgres)
+- [social-feed-api](https://github.com/Doctor-Mavix/social-feed-api) — validation project: follow graph and home timeline (MongoDB)
+- [ecommerce-orders-api](https://github.com/Doctor-Mavix/ecommerce-orders-api) — validation project: catalogue, cart, orders (Postgres)
 
 ## How I built this with Claude Code
 
