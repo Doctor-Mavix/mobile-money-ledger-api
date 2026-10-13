@@ -42,7 +42,7 @@ services:
   # S3-compatible object storage. The application talks plain S3, so moving to AWS,
   # Scaleway or any other provider is a change of endpoint and credentials.
   minio:
-    image: minio/minio:latest
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     restart: unless-stopped
     command: ['server', '/data', '--console-address', ':9001']
     environment:
@@ -62,7 +62,7 @@ services:
   # Creates the bucket once and exits. Keeps bucket provisioning out of the application,
   # where it would run on every boot of every instance.
   minio-init:
-    image: minio/mc:latest
+    image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z
     depends_on:
       minio:
         condition: service_healthy
